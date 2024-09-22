@@ -130,7 +130,11 @@ func findStructType(t reflect.Type, depth int, visited map[reflect.Type]string, 
 			fields = append(fields, fieldVal)
 		}
 
-		name += "\n" + strings.Join(fields, "\n") + "\n" + cfg.Prefixer(depth-1) + "}"
+		if len(fields) == 0 {
+			name += "}"
+		} else {
+			name += "\n" + strings.Join(fields, "\n") + "\n" + cfg.Prefixer(depth-1) + "}"
+		}
 
 		visited[t] = name
 
