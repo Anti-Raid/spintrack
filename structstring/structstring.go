@@ -51,6 +51,9 @@ func NewDefaultConvertStructToStringConfig() *ConvertStructToStringConfig {
 	}
 }
 
+// NOTE: This only shows you the *TYPES/STRUCTURE* of the struct, not the actual values
+//
+// AKA, a map[string]string will show as "map[string]string" and not "map[string]string{key: value}"
 func ConvertStructToString(s any, cfg *ConvertStructToStringConfig) string {
 	if s == nil {
 		return ""
