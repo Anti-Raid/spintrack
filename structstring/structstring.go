@@ -17,33 +17,37 @@ type ConvertStructToStringConfig struct {
 	Debug bool
 }
 
+func BaseStructRecurseOverride(t reflect.Type) (*string, bool) {
+	switch t.PkgPath() {
+	// Time is self-explanatory
+	case "time":
+		timeName := "time." + t.Name()
+		return &timeName, true
+	// RawMessage is a special case for json.RawMessage
+	case "encoding/json":
+		if t.Name() == "RawMessage" {
+			rawMessageName := "json.RawMessage"
+			return &rawMessageName, true
+		}
+	}
+	return nil, false
+}
+
+func BasePrefixer(depth int) string {
+	var tabs = ""
+
+	for i := 0; i < depth; i++ {
+		tabs += "\t"
+	}
+
+	return tabs
+}
+
 func NewDefaultConvertStructToStringConfig() *ConvertStructToStringConfig {
 	return &ConvertStructToStringConfig{
-		Prefixer: func(depth int) string {
-			var tabs = ""
-
-			for i := 0; i < depth; i++ {
-				tabs += "\t"
-			}
-
-			return tabs
-		},
-		StructRecurseOverride: func(t reflect.Type) (*string, bool) {
-			switch t.PkgPath() {
-			// Time is self-explanatory
-			case "time":
-				timeName := "time." + t.Name()
-				return &timeName, true
-			// RawMessage is a special case for json.RawMessage
-			case "encoding/json":
-				if t.Name() == "RawMessage" {
-					rawMessageName := "json.RawMessage"
-					return &rawMessageName, true
-				}
-			}
-			return nil, false
-		},
-		Tags: []string{"json", "validate", "description"},
+		Prefixer:              BasePrefixer,
+		StructRecurseOverride: BaseStructRecurseOverride,
+		Tags:                  []string{"json", "validate", "description"},
 	}
 }
 
@@ -66,12 +70,6 @@ func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}
 	case reflect.Struct:
 		name := t.Name()
 
-		if name == "" {
-			name = "{"
-		} else {
-			name += " {"
-		}
-
 		// Handle override and recursion
 		override, overrideOk := cfg.StructRecurseOverride(t)
 
@@ -89,6 +87,13 @@ func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}
 
 		if overrideOk {
 			return name
+		}
+
+		// Add braces
+		if name == "" {
+			name = "{"
+		} else {
+			name += " {"
 		}
 
 		var fields = []string{}
