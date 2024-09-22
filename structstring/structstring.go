@@ -11,6 +11,8 @@ type ConvertStructToStringConfig struct {
 	Prefixer func(depth int) string
 	// Struct Recursion Override, useful for resolving things like time.Time to time.Time and not expanding it fully out
 	StructRecurseOverride func(t reflect.Type) (*string, bool)
+	// The tags to lookup/show on each struct
+	Tags []string
 }
 
 func NewDefaultConvertStructToStringConfig() *ConvertStructToStringConfig {
@@ -39,6 +41,7 @@ func NewDefaultConvertStructToStringConfig() *ConvertStructToStringConfig {
 			}
 			return nil, false
 		},
+		Tags: []string{"json", "validate", "description"},
 	}
 }
 
@@ -82,11 +85,25 @@ func findStructType(t reflect.Type, depth int, cfg *ConvertStructToStringConfig)
 
 			structName := field.Name
 
-			if jsonTag != "" {
-				structName = jsonTag + " (fieldname=" + field.Name + ")"
+			fieldVal := fmt.Sprintf("%s%v: %v", cfg.Prefixer(depth), structName, findStructType(field.Type, depth+1, cfg))
+
+			if len(cfg.Tags) > 0 {
+				var tagData = []string{}
+
+				for _, tag := range cfg.Tags {
+					tagVal := field.Tag.Get(tag)
+
+					if tagVal != "" {
+						tagData = append(tagData, tag+"="+tagVal)
+					}
+				}
+
+				if len(tagData) > 0 {
+					fieldVal += " [" + strings.Join(tagData, ", ") + "]"
+				}
 			}
 
-			fields = append(fields, fmt.Sprintf("%s%v: %v", cfg.Prefixer(depth), structName, findStructType(field.Type, depth+1, cfg)))
+			fields = append(fields, fieldVal)
 		}
 
 		name += "\n" + strings.Join(fields, "\n") + "\n" + cfg.Prefixer(depth-1) + "}"
