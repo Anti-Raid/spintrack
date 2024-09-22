@@ -138,7 +138,7 @@ func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}
 	case reflect.Map:
 		return "map[" + findStructType(t.Key(), 0, visited, cfg) + "]" + findStructType(t.Elem(), 0, visited, cfg)
 	case reflect.Ptr:
-		return findStructType(t.Elem(), depth, visited, cfg)
+		return "*" + findStructType(t.Elem(), depth, visited, cfg)
 	default:
 		name := t.Name()
 
