@@ -54,28 +54,41 @@ func ConvertStructToString(s any, cfg *ConvertStructToStringConfig) string {
 
 	refType := reflect.TypeOf(s)
 
-	return findStructType(refType, 1, cfg)
+	return findStructType(refType, 1, make(map[reflect.Type]struct{}), cfg)
 }
 
-func findStructType(t reflect.Type, depth int, cfg *ConvertStructToStringConfig) string {
+func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}, cfg *ConvertStructToStringConfig) string {
 	if cfg.Debug {
 		fmt.Println("findStructType", t, depth)
 	}
 
 	switch t.Kind() {
 	case reflect.Struct:
-		// Handle stdlib
-		switch t.PkgPath() {
-		case "time":
-			return "time." + t.Name()
-		}
-
 		name := t.Name()
 
 		if name == "" {
 			name = "{"
 		} else {
 			name += " {"
+		}
+
+		// Handle override and recursion
+		override, overrideOk := cfg.StructRecurseOverride(t)
+
+		if override != nil {
+			name = *override
+		}
+
+		// Check if in visited to avoid infinite recursion
+		if _, haveVisited := visited[t]; haveVisited {
+			return name
+		}
+
+		// Mark as visited
+		visited[t] = struct{}{}
+
+		if overrideOk {
+			return name
 		}
 
 		var fields = []string{}
@@ -91,7 +104,7 @@ func findStructType(t reflect.Type, depth int, cfg *ConvertStructToStringConfig)
 
 			structName := field.Name
 
-			fieldVal := fmt.Sprintf("%s%v: %v", cfg.Prefixer(depth), structName, findStructType(field.Type, depth+1, cfg))
+			fieldVal := fmt.Sprintf("%s%v: %v", cfg.Prefixer(depth), structName, findStructType(field.Type, depth+1, visited, cfg))
 
 			if len(cfg.Tags) > 0 {
 				var tagData = []string{}
@@ -116,11 +129,11 @@ func findStructType(t reflect.Type, depth int, cfg *ConvertStructToStringConfig)
 
 		return name
 	case reflect.Array, reflect.Slice:
-		return "[]" + findStructType(t.Elem(), depth, cfg)
+		return "[]" + findStructType(t.Elem(), depth, visited, cfg)
 	case reflect.Map:
-		return "map[" + findStructType(t.Key(), 0, cfg) + "]" + findStructType(t.Elem(), 0, cfg)
+		return "map[" + findStructType(t.Key(), 0, visited, cfg) + "]" + findStructType(t.Elem(), 0, visited, cfg)
 	case reflect.Ptr:
-		return findStructType(t.Elem(), depth, cfg)
+		return findStructType(t.Elem(), depth, visited, cfg)
 	default:
 		name := t.Name()
 
