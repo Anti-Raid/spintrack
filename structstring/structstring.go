@@ -81,7 +81,7 @@ func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}
 
 		// Check if in visited to avoid infinite recursion
 		if _, haveVisited := visited[t]; haveVisited {
-			return name
+			return name + " [self-reference]"
 		}
 
 		// Mark as visited
