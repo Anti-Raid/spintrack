@@ -13,6 +13,8 @@ type ConvertStructToStringConfig struct {
 	StructRecurseOverride func(t reflect.Type) (*string, bool)
 	// The tags to lookup/show on each struct
 	Tags []string
+	// Debug mode
+	Debug bool
 }
 
 func NewDefaultConvertStructToStringConfig() *ConvertStructToStringConfig {
@@ -56,6 +58,10 @@ func ConvertStructToString(s any, cfg *ConvertStructToStringConfig) string {
 }
 
 func findStructType(t reflect.Type, depth int, cfg *ConvertStructToStringConfig) string {
+	if cfg.Debug {
+		fmt.Println("findStructType", t, depth)
+	}
+
 	switch t.Kind() {
 	case reflect.Struct:
 		// Handle stdlib
