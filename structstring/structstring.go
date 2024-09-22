@@ -58,10 +58,10 @@ func ConvertStructToString(s any, cfg *ConvertStructToStringConfig) string {
 
 	refType := reflect.TypeOf(s)
 
-	return findStructType(refType, 1, make(map[reflect.Type]struct{}), cfg)
+	return findStructType(refType, 1, make(map[reflect.Type]string), cfg)
 }
 
-func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}, cfg *ConvertStructToStringConfig) string {
+func findStructType(t reflect.Type, depth int, visited map[reflect.Type]string, cfg *ConvertStructToStringConfig) string {
 	if cfg.Debug {
 		fmt.Println("findStructType", t, depth)
 	}
@@ -78,12 +78,12 @@ func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}
 		}
 
 		// Check if in visited to avoid infinite recursion
-		if _, haveVisited := visited[t]; haveVisited {
-			return name + " [self-reference]"
+		if cachedValue, haveVisited := visited[t]; haveVisited {
+			return cachedValue + " [self-reference]"
 		}
 
 		// Mark as visited
-		visited[t] = struct{}{}
+		visited[t] = ""
 
 		if overrideOk {
 			return name
@@ -131,6 +131,8 @@ func findStructType(t reflect.Type, depth int, visited map[reflect.Type]struct{}
 		}
 
 		name += "\n" + strings.Join(fields, "\n") + "\n" + cfg.Prefixer(depth-1) + "}"
+
+		visited[t] = name
 
 		return name
 	case reflect.Array, reflect.Slice:
