@@ -99,6 +99,13 @@ func findStructType(t reflect.Type, depth int, cfg *ConvertStructToStringConfig)
 	case reflect.Ptr:
 		return findStructType(t.Elem(), depth, cfg)
 	default:
-		return t.Name()
+		name := t.Name()
+
+		// e.g. nil interfaces
+		if name == "" {
+			name = "any"
+		}
+
+		return name
 	}
 }
