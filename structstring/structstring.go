@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"time"
 )
 
 type ConvertStructToStringConfig struct {
