@@ -11,10 +11,6 @@ type StructFieldsConfig struct {
 //
 // Returns an empty slice if `s` is not a struct
 func StructFields(s any, cfg StructFieldsConfig) []string {
-	if s == nil {
-		return []string{}
-	}
-
 	refType := reflect.TypeOf(s)
 
 	if refType.Kind() != reflect.Struct {
