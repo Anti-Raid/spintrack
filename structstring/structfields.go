@@ -13,30 +13,37 @@ type StructFieldsConfig struct {
 func StructFields(s any, cfg StructFieldsConfig) []string {
 	refType := reflect.TypeOf(s)
 
-	if refType.Kind() != reflect.Struct {
-		return []string{}
-	}
-
-	var fields = []string{}
-
-	for i := 0; i < refType.NumField(); i++ {
-		field := refType.Field(i)
-
-		var fieldName = field.Name
-		if cfg.FieldFilter != nil {
-			fieldNameOverride, ok := cfg.FieldFilter(field)
-
-			if !ok {
-				continue
-			}
-
-			if fieldNameOverride != nil {
-				fieldName = *fieldNameOverride
-			}
+	switch refType.Kind() {
+	case reflect.Ptr:
+		return StructFields(refType.Elem(), cfg)
+	case reflect.Struct:
+		if refType.Kind() != reflect.Struct {
+			return []string{}
 		}
 
-		fields = append(fields, fieldName)
-	}
+		var fields = []string{}
 
-	return fields
+		for i := 0; i < refType.NumField(); i++ {
+			field := refType.Field(i)
+
+			var fieldName = field.Name
+			if cfg.FieldFilter != nil {
+				fieldNameOverride, ok := cfg.FieldFilter(field)
+
+				if !ok {
+					continue
+				}
+
+				if fieldNameOverride != nil {
+					fieldName = *fieldNameOverride
+				}
+			}
+
+			fields = append(fields, fieldName)
+		}
+
+		return fields
+	default:
+		return []string{}
+	}
 }
