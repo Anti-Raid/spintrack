@@ -1,7 +1,6 @@
 package structstring
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -15,12 +14,13 @@ type StructFieldsConfig struct {
 // Returns an empty slice if `s` is not a struct
 func StructFields(s any, cfg StructFieldsConfig) []string {
 	refType := reflect.TypeOf(s)
+	return findType(refType, cfg)
+}
 
-	fmt.Println(s, refType.Kind())
-
+func findType(refType reflect.Type, cfg StructFieldsConfig) []string {
 	switch refType.Kind() {
 	case reflect.Ptr:
-		return StructFields(refType.Elem(), cfg)
+		return findType(refType.Elem(), cfg)
 	case reflect.Struct:
 		var fields = []string{}
 
