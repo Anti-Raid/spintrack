@@ -1,6 +1,9 @@
 package structstring
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type StructFieldsConfig struct {
 	// For every field, returns the field name if it should be included, or nil if it should be excluded. A *string can also be returned to override the field itself
@@ -13,14 +16,12 @@ type StructFieldsConfig struct {
 func StructFields(s any, cfg StructFieldsConfig) []string {
 	refType := reflect.TypeOf(s)
 
+	fmt.Println(s, refType.Kind())
+
 	switch refType.Kind() {
 	case reflect.Ptr:
 		return StructFields(refType.Elem(), cfg)
 	case reflect.Struct:
-		if refType.Kind() != reflect.Struct {
-			return []string{}
-		}
-
 		var fields = []string{}
 
 		for i := 0; i < refType.NumField(); i++ {
