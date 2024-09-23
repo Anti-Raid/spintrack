@@ -3,7 +3,8 @@ package structstring
 import "reflect"
 
 type StructFieldsConfig struct {
-	FieldFilter func(field reflect.StructField) bool
+	// For every field, returns the field name if it should be included, or nil if it should be excluded. A *string can also be returned to override the field itself
+	FieldFilter func(field reflect.StructField) (*string, bool)
 }
 
 // Given a struct, return a list of all the fields in the struct
@@ -25,11 +26,20 @@ func StructFields(s any, cfg StructFieldsConfig) []string {
 	for i := 0; i < refType.NumField(); i++ {
 		field := refType.Field(i)
 
-		if cfg.FieldFilter != nil && !cfg.FieldFilter(field) {
-			continue
+		var fieldName = field.Name
+		if cfg.FieldFilter != nil {
+			fieldNameOverride, ok := cfg.FieldFilter(field)
+
+			if !ok {
+				continue
+			}
+
+			if fieldNameOverride != nil {
+				fieldName = *fieldNameOverride
+			}
 		}
 
-		fields = append(fields, field.Name)
+		fields = append(fields, fieldName)
 	}
 
 	return fields
